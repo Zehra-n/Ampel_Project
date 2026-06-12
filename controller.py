@@ -1,18 +1,19 @@
 from traffic_light import TrafficLight
-from utime import sleep
+from utime import ticks_ms
 
-GREEN_DURATION = 5
-MIN_CAR_GREEN_DURATION = 3
+GREEN_DURATION = 5000
+TRANSITION_DELAY = 1000
 
 class TrafficController:
     def __init__(self):
-        # Ampel 1 = Autos: R=GPIO6, Y=GPIO7, G=GPIO8
-        # Ampel 2 = Fussgänger: R=GPIO18, Y=GPIO19, G=GPIO20
         self.car_light = TrafficLight(6, 7, 8)
         self.pedestrian_light = TrafficLight(18, 19, 20)
 
         self.pedestrian_requested = False
         self.car_requested = False
+
+        self.state = 'car_green'
+        self.state_start = ticks_ms()
 
         self.car_light.set_green()
         self.pedestrian_light.set_red()
@@ -24,23 +25,40 @@ class TrafficController:
         self.car_requested = True
 
     def run_cycle(self):
-        if self.pedestrian_requested:
-            self._give_pedestrian_green()
-        elif self.car_requested:
-            self._give_car_green()
-        else:
-            sleep(1)
+        now = ticks_ms()
+        elapsed = now - self.state_start
 
-    def _give_pedestrian_green(self):
-        self.car_light.transition_to_red()
-        self.pedestrian_light.transition_to_green()
-        sleep(GREEN_DURATION)
-        self.pedestrian_light.transition_to_red()
-        self.car_light.transition_to_green()
-        self.pedestrian_requested = False
+        if self.state == 'car_green':
+            if self.pedestrian_requested and elapsed > GREEN_DURATION:
+                self._set_state('car_yellow')
 
-    def _give_car_green(self):
-        self.pedestrian_light.transition_to_red()
-        self.car_light.transition_to_green()
-        sleep(MIN_CAR_GREEN_DURATION)
-        self.car_requested = False
+        elif self.state == 'car_yellow':
+            if elapsed > TRANSITION_DELAY:
+                self.car_light.set_red()
+                self._set_state('car_red')
+
+        elif self.state == 'car_red':
+            if elapsed > TRANSITION_DELAY:
+                self.pedestrian_light.transition_to_green()
+                self._set_state('pedestrian_green')
+
+        elif self.state == 'pedestrian_green':
+            if elapsed > GREEN_DURATION:
+                self._set_state('pedestrian_yellow')
+
+        elif self.state == 'pedestrian_yellow':
+            if elapsed > TRANSITION_DELAY:
+                self.pedestrian_light.set_red()
+                self._set_state('pedestrian_red')
+
+        elif self.state == 'pedestrian_red':
+            if elapsed > TRANSITION_DELAY:
+                self.pedestrian_requested = False
+                self.car_light.transition_to_green()
+                self._set_state('car_green')
+
+    def _set_state(self, new_state):
+        if new_state == 'car_yellow':
+            self.car_light.set_yellow()
+        self.state = new_state
+        self.state_start = ticks_ms()

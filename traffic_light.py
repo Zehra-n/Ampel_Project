@@ -1,7 +1,4 @@
 from machine import Pin
-from utime import sleep
-
-TRANSITION_DELAY = 1
 
 class TrafficLight:
     def __init__(self, pin_red, pin_yellow, pin_green):
@@ -32,16 +29,10 @@ class TrafficLight:
         self.all_off()
         self.yellow.on()
 
-    def transition_to_green(self):
-        self.set_red()
-        sleep(TRANSITION_DELAY)
-        self.set_red_yellow()
-        sleep(TRANSITION_DELAY)
-        self.set_green()
+def transition_to_green(self):
+    self.set_red_yellow()
+    self.set_green()
 
-    def transition_to_red(self):
-        self.set_green()
-        sleep(TRANSITION_DELAY)
-        self.set_yellow()
-        sleep(TRANSITION_DELAY)
-        self.set_red()
+def transition_to_red(self):
+    self.set_yellow()
+    self.set_red()

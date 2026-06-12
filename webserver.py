@@ -39,6 +39,7 @@ def start_ap():
 def create_server():
     addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
     s = socket.socket()
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(addr)
     s.listen(1)
     s.setblocking(False)
@@ -54,8 +55,8 @@ def handle_request(server_socket, controller):
         elif 'GET /car' in request:
             controller.request_car()
 
-        cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-        cl.send(HTML)
+        cl.sendall(b'HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n' + HTML.encode())
         cl.close()
-    except OSError:
-        pass
+    except OSError as e:
+        if e.args[0] != 11:
+            print('Fehler:', e)
