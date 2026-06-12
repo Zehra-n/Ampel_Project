@@ -1,4 +1,4 @@
-from traffic_light import TrafficLight
+from Project.traffic_light import TrafficLight
 from utime import sleep
 
 GREEN_DURATION = 5
