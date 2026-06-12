@@ -26,8 +26,14 @@ def start_ap():
     ap = network.WLAN(network.AP_IF)
     ap.config(essid=SSID, password=PASSWORD)
     ap.active(True)
+    print("AP wird gestartet...")
+    timeout = 0
     while not ap.active():
-        pass
+        print("warte...")
+        timeout += 1
+        if timeout > 10:
+            print("AP Timeout!")
+            break
     print('AP started:', ap.ifconfig())
 
 def create_server():
