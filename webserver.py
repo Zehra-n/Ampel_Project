@@ -1,42 +1,55 @@
 import socket
 import network
-import machine
-ssid = '{insertSSID}'
-password = '{insertSSID-PW}'
-led = machine.Pin("LED", machine.Pin.OUT)
-ap = network.WLAN(network.AP_IF)
-ap.config(essid=ssid, password=password)
-ap.active(True)
-while ap.active() == False:
-    pass
-print('Connection successful')
-print(ap.ifconfig())
-html = """<!DOCTYPE html>
+
+SSID = 'AmpelPico'
+PASSWORD = 'ampel1234'
+
+HTML = """<!DOCTYPE html>
 <html>
-  <head> <title>Pico W</title> </head>
-  <body> <h1>Pico W</h1>
-  <p>Hello from Pico W.</p>
-  </body>
+<head>
+  <title>Ampelsteuerung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h1>Ampelsteuerung</h1>
+  <form action="/pedestrian" method="get">
+    <button type="submit">Fussgänger: Grün anfordern</button>
+  </form>
+  <form action="/car" method="get">
+    <button type="submit">Auto: Grün anfordern</button>
+  </form>
+</body>
 </html>
 """
-addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-s = socket.socket()
-s.bind(addr)
-s.listen(1)
-print('listening on', addr)
-led.off()
-# Listen for connections
-while True:
+
+def start_ap():
+    ap = network.WLAN(network.AP_IF)
+    ap.config(essid=SSID, password=PASSWORD)
+    ap.active(True)
+    while not ap.active():
+        pass
+    print('AP started:', ap.ifconfig())
+
+def create_server():
+    addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+    s = socket.socket()
+    s.bind(addr)
+    s.listen(1)
+    s.setblocking(False)
+    return s
+
+def handle_request(server_socket, controller):
     try:
-        cl, addr = s.accept()
-        print('client connected from', addr)
-        request = cl.recv(1024)
-        led.on()
-        print(request)
+        cl, addr = server_socket.accept()
+        request = cl.recv(1024).decode()
+
+        if 'GET /pedestrian' in request:
+            controller.request_pedestrian()
+        elif 'GET /car' in request:
+            controller.request_car()
+
         cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-        cl.send(html)
+        cl.send(HTML)
         cl.close()
-        led.off()
-    except OSError as e:
-        cl.close()
-        print('connection closed')
+    except OSError:
+        pass
