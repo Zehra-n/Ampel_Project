@@ -28,11 +28,3 @@ class TrafficLight:
     def set_yellow(self):
         self.all_off()
         self.yellow.on()
-
-def transition_to_green(self):
-    self.set_red_yellow()
-    self.set_green()
-
-def transition_to_red(self):
-    self.set_yellow()
-    self.set_red()

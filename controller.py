@@ -30,6 +30,7 @@ class TrafficController:
 
         if self.state == 'car_green':
             if self.pedestrian_requested and elapsed > GREEN_DURATION:
+                self.car_light.set_yellow()
                 self._set_state('car_yellow')
 
         elif self.state == 'car_yellow':
@@ -39,11 +40,17 @@ class TrafficController:
 
         elif self.state == 'car_red':
             if elapsed > TRANSITION_DELAY:
-                self.pedestrian_light.transition_to_green()
+                self.pedestrian_light.set_red_yellow()
+                self._set_state('pedestrian_red_yellow')
+
+        elif self.state == 'pedestrian_red_yellow':
+            if elapsed > TRANSITION_DELAY:
+                self.pedestrian_light.set_green()
                 self._set_state('pedestrian_green')
 
         elif self.state == 'pedestrian_green':
             if elapsed > GREEN_DURATION:
+                self.pedestrian_light.set_yellow()
                 self._set_state('pedestrian_yellow')
 
         elif self.state == 'pedestrian_yellow':
@@ -54,11 +61,14 @@ class TrafficController:
         elif self.state == 'pedestrian_red':
             if elapsed > TRANSITION_DELAY:
                 self.pedestrian_requested = False
-                self.car_light.transition_to_green()
+                self.car_light.set_red_yellow()
+                self._set_state('car_red_yellow')
+
+        elif self.state == 'car_red_yellow':
+            if elapsed > TRANSITION_DELAY:
+                self.car_light.set_green()
                 self._set_state('car_green')
 
     def _set_state(self, new_state):
-        if new_state == 'car_yellow':
-            self.car_light.set_yellow()
         self.state = new_state
         self.state_start = ticks_ms()
